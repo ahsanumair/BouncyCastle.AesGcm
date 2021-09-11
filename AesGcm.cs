@@ -36,7 +36,7 @@ namespace BouncyCastle.AesGcm
 
 		private bool isDisposed;
 
-		public AesGcmStreamCipher(Stream stream, StreamSettings cryptoSettings, AesGcmStreamMode mode)
+		public AesGcm(Stream stream, StreamSettings cryptoSettings, AesGcmStreamMode mode)
 		{
 			settings = cryptoSettings;
 			streamLength = 0;
