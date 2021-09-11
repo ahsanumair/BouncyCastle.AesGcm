@@ -22,7 +22,7 @@ namespace BouncyCastle.AesGcm
 		public byte[] Nonce;
 	}
 
-	public class AesGcm
+	public class AesGcm : IAesGcm
 	{
 		private CipherStream writeCipherStream = null;
 		
@@ -33,7 +33,10 @@ namespace BouncyCastle.AesGcm
 		private long streamLength;
 
 		private const string Algorithm = "AES/GCM/NoPadding";
-		public AesGcm(Stream stream, StreamSettings cryptoSettings, AesGcmStreamMode mode)
+
+		private bool isDisposed;
+
+		public AesGcmStreamCipher(Stream stream, StreamSettings cryptoSettings, AesGcmStreamMode mode)
 		{
 			settings = cryptoSettings;
 			streamLength = 0;
@@ -118,27 +121,40 @@ namespace BouncyCastle.AesGcm
 
 		public void Dispose()
 		{
-			if (writeCipherStream != null)
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (isDisposed) return;
+
+			if (disposing)
 			{
-				if (writeCipherStream.CanSeek)
+				if (writeCipherStream != null)
 				{
-					writeCipherStream.Flush();
+					if (writeCipherStream.CanSeek)
+					{
+						writeCipherStream.Flush();
+					}
+
+					writeCipherStream.Dispose();
+					writeCipherStream = null;
 				}
-				
-				writeCipherStream.Dispose();
-				writeCipherStream = null;
+
+				if (readCipherStream != null)
+				{
+					if (readCipherStream.CanSeek)
+					{
+						readCipherStream.Flush();
+					}
+
+					readCipherStream.Dispose();
+					readCipherStream = null;
+				}
 			}
 
-			if (readCipherStream != null)
-			{
-				if (readCipherStream.CanSeek)
-				{
-					readCipherStream.Flush();
-				}
-				
-				readCipherStream.Dispose();
-				readCipherStream = null;
-			}
+			isDisposed = true;
 		}
 
 		public static string GetCryptedRandom(int size)
