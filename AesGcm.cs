@@ -128,7 +128,6 @@ namespace BouncyCastle.AesGcm
 		protected virtual void Dispose(bool disposing)
 		{
 			if (isDisposed) return;
-
 			if (disposing)
 			{
 				if (writeCipherStream != null)

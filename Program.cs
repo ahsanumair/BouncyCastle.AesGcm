@@ -21,31 +21,30 @@ namespace BouncyCastle.AesGcm
             ////Encrypt content to file
             var writeStream = fileInfo.Open(FileMode.Create, FileAccess.Write);
 
-            var writeCrypto = new AesGcm(writeStream, settings, AesGcmStreamMode.Write);
+            using (var writeCrypto = new AesGcm(writeStream, settings, AesGcmStreamMode.Write))
+            {
+                Console.WriteLine("Encrypting Text...");
 
-            Console.WriteLine("Encrypting Text...");
-
-            writeCrypto.WriteLine("This text needs to be encrypted using AES GCM encryption.");
-            writeCrypto.WriteLine("This text needs to be encrypted using AES GCM encryption.");
-
-            writeCrypto.Dispose(); //must call dispose to release resources
+                writeCrypto.WriteLine("This text needs to be encrypted using AES GCM encryption.");
+                writeCrypto.WriteLine("This text needs to be encrypted using AES GCM encryption.");
+                writeCrypto.Write("This text needs to be encrypted using AES GCM encryption.");
+            }
 
             Console.WriteLine($"Encrypting finished...\n\n");
 
             //Decrypt content from file
             var readStream = fileInfo.OpenRead();
 
-            var readCrypto = new AesGcm(readStream, settings, AesGcmStreamMode.Read);
-            
-            Console.WriteLine("Decrypting Text...");
+            using (var readCrypto = new AesGcm(readStream, settings, AesGcmStreamMode.Read))
+            {
+                Console.WriteLine("Decrypting Text...");
 
-            var decryptedText = readCrypto.ReadAllText();
+                var decryptedText = readCrypto.ReadAllText();
 
-            readCrypto.Dispose(); //must call dispose to release resources
+                Console.WriteLine("Decrytion finished...\n\n");
 
-            Console.WriteLine("Decrytion finished...\n\n");
-
-            Console.WriteLine(decryptedText);
+                Console.WriteLine(decryptedText);
+            }
             
             Console.ReadKey();
         }
