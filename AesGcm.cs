@@ -69,7 +69,7 @@ namespace BouncyCastle.AesGcm
 
 		public void WriteLine(string text)
 		{
-			EncryptBytes(Encoding.UTF8.GetBytes(text + "\n"));
+			EncryptBytes(Encoding.UTF8.GetBytes(text + "\r\n"));
 		}
 
 		public string ReadAllText()
