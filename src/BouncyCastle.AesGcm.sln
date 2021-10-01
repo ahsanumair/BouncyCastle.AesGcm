@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Encryption", "Encryption", "{C8A207EF-354C-4F12-9872-392F1308D775}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4F603EB6-6E91-4C05-95C6-93A74C703C67}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BouncyCastle.AesGcmEncyrption", "BouncyCastle.AesGcmEncryption\BouncyCastle.AesGcmEncyrption.csproj", "{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BouncyCastle.AesGcmEncryption.Tests", "..\tests\BouncyCastle.AesGcmEncryption.Tests\BouncyCastle.AesGcmEncryption.Tests.csproj", "{9FDB156E-215C-40DF-BBB8-356B6CFAB891}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FDB156E-215C-40DF-BBB8-356B6CFAB891}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FDB156E-215C-40DF-BBB8-356B6CFAB891}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FDB156E-215C-40DF-BBB8-356B6CFAB891}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FDB156E-215C-40DF-BBB8-356B6CFAB891}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D7F3F443-4DAB-45EC-8ACE-B3D3DB54B43A} = {C8A207EF-354C-4F12-9872-392F1308D775}
+		{9FDB156E-215C-40DF-BBB8-356B6CFAB891} = {4F603EB6-6E91-4C05-95C6-93A74C703C67}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0C07AF18-1910-45CD-9022-90D8EF011F19}
+	EndGlobalSection
+EndGlobal
