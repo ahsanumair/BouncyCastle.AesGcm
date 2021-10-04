@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using BouncyCastle.AesGcmEncryption;
 using FluentAssertions;
 using NUnit.Framework;
@@ -135,20 +136,37 @@ namespace BouncyCastle.AesGcm.Tests
         }
 
         [Test]
-        public void EncryptAndDecrypt_ValidInputProvidedToEncrypt_SuccessfullyDecrypted()
+        public void EncryptAndDecrypt_ValidUTF8InputProvidedToEncrypt_SuccessfullyDecrypted()
+        {
+            var text = "Δ, Й, ק, ‎ م, ๗, あ, 叶, 葉, and 말. ABC";
+
+            var decryptedText = EncryptDecrypt(text,"UTF8File.txt", Encoding.UTF8);
+
+            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+        }
+
+        [Test]
+        public void EncryptAndDecrypt_ValidASCIIInputProvidedToEncrypt_SuccessfullyDecrypted()
+        {
+            var text = "Hello World, This text needs to be encrypted";
+
+            var decryptedText = EncryptDecrypt(text,"ASCIIEncodedFile.txt", Encoding.ASCII);
+
+            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+        }
+
+        private string EncryptDecrypt(string text, string fileName, Encoding encoding)
         {
             _settings.Key = AesGcmStreamCipher.GetCryptedRandom(32);
             _settings.Nonce = AesGcmStreamCipher.GetCryptedRandom(32);
 
-            var text = "Hello World, This text needs to be encrypted";
-
-            var path = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\EncryptedFile.txt";
+            var path = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\{fileName}";
 
             FileInfo fileInfo = new FileInfo(path);
 
             var writeStream = fileInfo.Open(FileMode.Create, FileAccess.Write);
 
-            using (var _aesGcmStreamEncryptCipher = new AesGcmStreamCipher(writeStream, _settings, StreamingMode.Write))
+            using (var _aesGcmStreamEncryptCipher = new AesGcmStreamCipher(writeStream, _settings, StreamingMode.Write, encoding))
             {
                 _aesGcmStreamEncryptCipher.EncryptLine(text);
                 _aesGcmStreamEncryptCipher.EncryptLine(text);
@@ -158,7 +176,7 @@ namespace BouncyCastle.AesGcm.Tests
             string decryptedText;
             var readStream = fileInfo.OpenRead();
 
-            using (var _aesGcmStreamDecryptCipher = new AesGcmStreamCipher(readStream, _settings, StreamingMode.Read))
+            using (var _aesGcmStreamDecryptCipher = new AesGcmStreamCipher(readStream, _settings, StreamingMode.Read, encoding))
             {
                 decryptedText = _aesGcmStreamDecryptCipher.Decrypt();
             }
@@ -168,7 +186,7 @@ namespace BouncyCastle.AesGcm.Tests
                 fileInfo.Delete();
             }
 
-            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+            return decryptedText;
         }
     }
 }

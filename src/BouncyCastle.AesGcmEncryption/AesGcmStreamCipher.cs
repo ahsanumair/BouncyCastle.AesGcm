@@ -115,12 +115,7 @@ namespace BouncyCastle.AesGcmEncryption
 
 		public void EncryptLine(string inputToEncrypt)
 		{
-			if (string.IsNullOrWhiteSpace(inputToEncrypt))
-			{
-				throw new ArgumentNullException(nameof(inputToEncrypt));
-			}
-
-			EncryptBytes(_encoding.GetBytes(inputToEncrypt + "\r\n"));
+			Encrypt(inputToEncrypt + "\r\n");
 		}
 
 		public string Decrypt()
