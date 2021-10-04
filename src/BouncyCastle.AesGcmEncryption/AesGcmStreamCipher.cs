@@ -10,7 +10,7 @@ using System.Text;
 namespace BouncyCastle.AesGcmEncryption
 {
 	public enum StreamingMode
-	{
+	{ 
 		Read = 0,
 		Write = 1
 	}
@@ -19,16 +19,15 @@ namespace BouncyCastle.AesGcmEncryption
 	{
 		public int KeySize = 256;
 		public int MacSize = 128;
+		public int NonceSize = 256;
 		public string Key;
 		public string Nonce;
 	}
 
 	public class AesGcmStreamCipher : IAesGcmStreamCipher
 	{
-		private CipherStream writeCipherStream = null;
-
-		private CipherStream readCipherStream = null;
-
+		private CipherStream _cipherStream = null;
+		
 		private StreamingSettings _streamingSettings = null;
 
 		private Encoding _encoding;
@@ -37,13 +36,11 @@ namespace BouncyCastle.AesGcmEncryption
 
 		private bool _isDisposed;
 
-		private const string Algorithm = "AES/GCM/NoPadding";
-
 		public AesGcmStreamCipher(Stream stream, StreamingSettings streamingSettings, StreamingMode streamingMode, Encoding encoding = null)
 		{
-			if (encoding == null)
-			{
-				encoding = Encoding.UTF8;
+			if (encoding == null) 
+			{ 
+				encoding = Encoding.UTF8; 
 			}
 
 			_encoding = encoding;
@@ -53,12 +50,12 @@ namespace BouncyCastle.AesGcmEncryption
 			{
 				throw new ArgumentNullException(nameof(stream));
 			}
-
+			
 			if (streamingSettings == null)
 			{
 				throw new ArgumentNullException(nameof(streamingSettings));
 			}
-
+			
 			if (string.IsNullOrWhiteSpace(streamingSettings.Key))
 			{
 				throw new ArgumentNullException("streamingSettings.Key");
@@ -73,36 +70,36 @@ namespace BouncyCastle.AesGcmEncryption
 			{
 				CheckKeyIsValid(keyBytes);
 			}
-			else
+			else 
 			{
-				keyBytes = _encoding.GetBytes(streamingSettings.Key);
-				CheckKeyIsValid(keyBytes);
+				throw new ArgumentException($"Key needs to be a valid base64 encoded string", "streamingSettings.Key");
 			}
 
-			if (!TryGetFromBase64String(streamingSettings.Nonce, out byte[] nonceBytes))
+			if (TryGetFromBase64String(streamingSettings.Nonce, out byte[] nonceBytes))
 			{
-				nonceBytes = _encoding.GetBytes(streamingSettings.Nonce);
+				CheckNonceIsValid(nonceBytes);
+			}
+			else
+			{
+				throw new ArgumentException($"Nonce needs to be a valid base64 encoded string", "streamingSettings.Nonce");
 			}
 
 			KeyParameter key = ParameterUtilities.CreateKeyParameter("AES", keyBytes);
+			IBufferedCipher bufferedCipher = CipherUtilities.GetCipher("AES/GCM/NoPadding");
 
 			if (streamingMode == StreamingMode.Write)
 			{
-				IBufferedCipher writeCipher = CipherUtilities.GetCipher(Algorithm);
+				bufferedCipher.Init(true, new AeadParameters(key, _streamingSettings.MacSize, nonceBytes));
 
-				writeCipher.Init(true, new AeadParameters(key, _streamingSettings.MacSize, nonceBytes));
-
-				writeCipherStream = new CipherStream(stream, null, writeCipher);
+				_cipherStream = new CipherStream(stream, null, bufferedCipher);
 			}
 			else if (streamingMode == StreamingMode.Read)
 			{
-				IBufferedCipher readCipher = CipherUtilities.GetCipher(Algorithm);
-
-				readCipher.Init(false, new AeadParameters(key, _streamingSettings.MacSize, nonceBytes));
+				bufferedCipher.Init(false, new AeadParameters(key, _streamingSettings.MacSize, nonceBytes));
 
 				_streamLength = stream.Length;
 
-				readCipherStream = new CipherStream(stream, readCipher, null);
+				_cipherStream = new CipherStream(stream, bufferedCipher, null);
 			}
 		}
 
@@ -112,7 +109,7 @@ namespace BouncyCastle.AesGcmEncryption
 			{
 				throw new ArgumentNullException(nameof(inputToEncrypt));
 			}
-
+			
 			EncryptBytes(_encoding.GetBytes(inputToEncrypt));
 		}
 
@@ -131,8 +128,8 @@ namespace BouncyCastle.AesGcmEncryption
 			if (_streamLength > 0)
 			{
 				var length = _streamLength - (_streamingSettings.MacSize / 8);
-
-				using (BinaryReader reader = new BinaryReader(readCipherStream, _encoding))
+				
+				using (BinaryReader reader = new BinaryReader(_cipherStream, _encoding))
 				{
 					return _encoding.GetString(DecryptBytes(reader, length));
 				}
@@ -145,9 +142,9 @@ namespace BouncyCastle.AesGcmEncryption
 		{
 			for (int i = 0; i != input.Length / 2; i++)
 			{
-				writeCipherStream.WriteByte(input[i]);
+				_cipherStream.WriteByte(input[i]);
 			}
-			writeCipherStream.Write(input, input.Length / 2, input.Length - input.Length / 2);
+			_cipherStream.Write(input, input.Length / 2, input.Length - input.Length / 2);
 		}
 
 		private byte[] DecryptBytes(BinaryReader reader, long length)
@@ -185,26 +182,15 @@ namespace BouncyCastle.AesGcmEncryption
 
 			if (disposing)
 			{
-				if (writeCipherStream != null)
+				if (_cipherStream != null)
 				{
-					if (writeCipherStream.CanSeek)
+					if (_cipherStream.CanSeek)
 					{
-						writeCipherStream.Flush();
+						_cipherStream.Flush();
 					}
 
-					writeCipherStream.Dispose();
-					writeCipherStream = null;
-				}
-
-				if (readCipherStream != null)
-				{
-					if (readCipherStream.CanSeek)
-					{
-						readCipherStream.Flush();
-					}
-
-					readCipherStream.Dispose();
-					readCipherStream = null;
+					_cipherStream.Dispose();
+					_cipherStream = null;
 				}
 			}
 
@@ -229,25 +215,25 @@ namespace BouncyCastle.AesGcmEncryption
 		{
 			if (key == null || key.Length != _streamingSettings.KeySize / 8)
 			{
-				throw new ArgumentException($"Key needs to be {_streamingSettings.KeySize} bit. Actual:{key?.Length * 8}", nameof(key));
+				throw new ArgumentException($"Key needs to be {_streamingSettings.KeySize} bit. Actual:{key?.Length * 8}", "streamingSettings.Key");
 			}
 		}
 
-		public static string GetCryptedRandom(int size, bool encodeBase64 = true)
+		private void CheckNonceIsValid(byte[] nonce)
+		{
+			if (nonce == null || nonce.Length != _streamingSettings.NonceSize / 8)
+			{
+				throw new ArgumentException($"Nonce needs to be {_streamingSettings.NonceSize} bit. Actual:{nonce?.Length * 8}", "streamingSettings.Nonce");
+			}
+		}
+
+		public static string GetCryptedRandom(int size)
 		{
 			using (var cryptoRandom = new RNGCryptoServiceProvider())
 			{
 				var key = new byte[size];
 				cryptoRandom.GetBytes(key);
-
-				if (encodeBase64)
-				{
-					return Convert.ToBase64String(key);
-				}
-				else
-				{
-					return Encoding.UTF8.GetString(key, 0, key.Length);
-				}
+				return Convert.ToBase64String(key);
 			}
 		}
 	}
