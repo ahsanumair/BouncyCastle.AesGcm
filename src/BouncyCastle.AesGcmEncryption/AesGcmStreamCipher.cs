@@ -233,13 +233,21 @@ namespace BouncyCastle.AesGcmEncryption
 			}
 		}
 
-		public static string GetCryptedRandom(int size)
+		public static string GetCryptedRandom(int size, bool encodeBase64 = true)
 		{
 			using (var cryptoRandom = new RNGCryptoServiceProvider())
 			{
 				var key = new byte[size];
 				cryptoRandom.GetBytes(key);
-				return Convert.ToBase64String(key);
+
+				if (encodeBase64)
+				{
+					return Convert.ToBase64String(key);
+				}
+				else
+				{
+					return Encoding.UTF8.GetString(key, 0, key.Length);
+				}
 			}
 		}
 	}
