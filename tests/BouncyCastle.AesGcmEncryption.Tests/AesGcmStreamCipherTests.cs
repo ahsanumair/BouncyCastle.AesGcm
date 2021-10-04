@@ -10,8 +10,6 @@ namespace BouncyCastle.AesGcm.Tests
     [Parallelizable]
     public class AesGcmStreamCipherTests
     {
-        private string _keyBase64 = "MTNiNDBmMTZhOTg0NGIxMGFjOTdiOGY4YTExMDhiY2Q=";
-
         private StreamingSettings _settings;
         private MemoryStream _writeStream;
 
@@ -19,7 +17,6 @@ namespace BouncyCastle.AesGcm.Tests
         public void Setup()
         {
             _writeStream = new MemoryStream();
-
             _settings = new StreamingSettings
             {
                 Nonce = AesGcmStreamCipher.GetCryptedRandom(32),
@@ -86,7 +83,7 @@ namespace BouncyCastle.AesGcm.Tests
         {
             _settings.Key = "MTNiNDBmMTZhOQ==";
 
-            var exception = Assert.Throws<ArgumentException>(() => new AesGcmStreamCipher(_writeStream, _settings, StreamingMode.Write));
+            var exception = Assert.Throws<ArgumentException>(() =>  new AesGcmStreamCipher(_writeStream, _settings, StreamingMode.Write));
 
             exception.ParamName.Should().Be("key");
 
@@ -99,7 +96,7 @@ namespace BouncyCastle.AesGcm.Tests
         [TestCase(null)]
         public void Encrypt_TextIsNullEmptyOrWhiteSpace_ItShouldThrowArgumentNullException(string text)
         {
-            _settings.Key = _keyBase64;
+            _settings.Key = AesGcmStreamCipher.GetCryptedRandom(32);
 
             using var _aesGcmStreamCipher = new AesGcmStreamCipher(_writeStream, _settings, StreamingMode.Write);
 
@@ -114,8 +111,8 @@ namespace BouncyCastle.AesGcm.Tests
         [TestCase(null)]
         public void EncryptLine_TextIsNullEmptyOrWhiteSpace_ItShouldThrowArgumentNullException(string text)
         {
-            _settings.Key = _keyBase64;
-
+            _settings.Key = AesGcmStreamCipher.GetCryptedRandom(32);
+           
             using var _aesGcmStreamCipher = new AesGcmStreamCipher(_writeStream, _settings, StreamingMode.Write);
 
             var exception = Assert.Throws<ArgumentNullException>(() => _aesGcmStreamCipher.EncryptLine(text));
@@ -124,11 +121,32 @@ namespace BouncyCastle.AesGcm.Tests
         }
 
         [Test]
-        public void EncryptAndDecrypt_ValidInputTextToEncrypt_SuccessfullyDecrypted()
+        public void EncryptAndDecrypt_InputWithBase64KeyProvided_SuccessfullyDecrypted()
         {
-            _settings.Key = _keyBase64;
+            var key = AesGcmStreamCipher.GetCryptedRandom(32, true);
+            
+            var text = "Hello World, This text needs to be encrypted";
+
+            var decryptedText = EncryptAndDecrypt(key, text);
+
+            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+        }
+
+        [Test]
+        public void EncryptAndDecrypt_InputWithPlainTextKeyProvided_SuccessfullyDecrypt()
+        {
+            var key = AesGcmStreamCipher.GetCryptedRandom(16, false);
 
             var text = "Hello World, This text needs to be encrypted";
+
+            var decryptedText = EncryptAndDecrypt(key, text);
+
+            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+        }
+
+        private string EncryptAndDecrypt(string key, string text) 
+        {
+            _settings.Key = key;
 
             var path = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\EncryptedFile.txt";
 
@@ -156,7 +174,8 @@ namespace BouncyCastle.AesGcm.Tests
                 fileInfo.Delete();
             }
 
-            decryptedText.Should().Be(text + "\r\n" + text + "\r\n" + text);
+            return decryptedText;
+
         }
     }
 }
